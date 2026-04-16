@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Silver Sun & Velvet Moon</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;600&family=Playfair+Display:ital,wght@1,600&display=swap" rel="stylesheet">
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background: #050509; /* Deep Midnight */
+            background: radial-gradient(circle at center, #1a1a2e 0%, #050509 100%);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            height: 100vh; width: 100vw;
+            display: flex; justify-content: center; align-items: center;
+            overflow: hidden; color: white;
+            perspective: 1000px; /* 3D effect */
+        }
+
+        /* Ambient Glow Layer */
+        .ambient-glow {
+            position: absolute;
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(255, 117, 143, 0.1) 0%, transparent 70%);
+            filter: blur(80px); z-index: 1;
+        }
+
+        /* Floating Stars */
+        #stars { position: absolute; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+
+        /* Stage 1: The Puzzle */
+        #puzzle-view {
+            z-index: 10; position: relative; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: space-between; align-items: center;
+            padding: 40px; text-align: center;
+        }
+
+        .title { font-family: 'Playfair Display'; font-size: 1.8rem; color: #ff85a1; opacity: 0.8; }
+        .hint { font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase; color: #888; margin-top: 10px; }
+
+        /* The Moon (Stationary Target) */
+        .moon {
+            position: absolute; top: 15%; right: 15%;
+            width: 130px; height: 130px;
+            background: radial-gradient(circle at 30% 30%, #ffbac9 0%, #ff85a1 40%, rgba(255,133,161,0) 80%);
+            filter: blur(20px); opacity: 0.8;
+            box-shadow: 0 0 50px rgba(255, 133, 161, 0.3);
+        }
+
+        /* The Sun (Draggable Object) */
+        .sun {
+            position: absolute; bottom: 15%; left: 15%;
+            width: 150px; height: 150px;
+            background: radial-gradient(circle, #ffffff 0%, #e2e8f0 40%, transparent 70%);
+            border-radius: 50%; filter: blur(10px);
+            cursor: grab; z-index: 20;
+            box-shadow: 0 0 70px rgba(226, 232, 240, 0.4);
+        }
+        .sun:active { cursor: grabbing; scale: 0.95; }
+
+        /* Stage 2: The Countdown & Reveal */
+        #countdown-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            display: none; justify-content: center; align-items: center;
+            z-index: 200; background: rgba(5, 5, 9, 0.95);
+        }
+        #countdown-text { font-family: 'Playfair Display'; font-size: 8rem; color: white; }
+
+        #reveal-zone {
+            display: none; animation: scaleUp 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            max-width: 480px; width: 90%; z-index: 250;
+        }
+
+        @keyframes scaleUp { from { opacity: 0; transform: scale(0.9) translateY(30px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(20px);
+            padding: 50px 40px; border-radius: 40px;
+            border: 1px solid rgba(255,255,255,0.08);
+            text-align: left; box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+        }
+
+        h1 { font-family: 'Playfair Display'; font-size: 2rem; color: #ff85a1; margin-bottom: 25px; line-height: 1.2; }
+        p { line-height: 1.8; font-size: 1rem; color: rgba(255,255,255,0.85); margin-bottom: 20px; }
+        .highlight { color: #ff85a1; font-weight: 600; }
+        
+        .footer { text-align: center; margin-top: 30px; font-size: 0.85rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; }
+
+        /* The Shooting Star (The Meet) */
+        #shooting-star {
+            position: fixed;
+            width: 2px; height: 100px;
+            background: linear-gradient(to top, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,0) 100%);
+            transform: rotate(45deg); display: none; z-index: 300;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="ambient-glow"></div>
+    <div id="stars"></div>
+    <div id="shooting-star"></div>
+
+    <div class="container">
+        <div id="puzzle-view">
+            <div>
+                <span style="color: rgba(255,255,255,0.4); font-size: 0.7rem; letter-spacing: 3px;">VELVET MOON x SILVER SUN</span>
+                <h1 class="title">Align the Orbits</h1>
+                <p class="hint">Move the Silver Sun to meet the Velvet Moon...</p>
+            </div>
+            
+            <div class="moon" id="moon-target"></div>
+            <div class="sun" id="sun-drag"></div>
+        </div>
+
+        <div id="countdown-overlay">
+            <h1 id="countdown-text">4</h1>
+        </div>
+
+        <div id="reveal-zone">
+            <div class="glass-card">
+                <h1>Happy Anniversary, Soujanya.</h1>
+                
+                <p>Today is <span class="highlight">April 15</span>, and it is officially the day our orbits finally found their harmony. You are the <span class="highlight">Silver Sun</span> to my <span class="highlight">Velvet Moon</span>, the constant light in my sky, <span class="highlight">sweetheart</span>.</p>
+                
+                <p>I cannot help but think back to <span class="highlight">December 1st</span>. If you had allowed me to block you during that kalesh, we would not be celebrating today. Thank you for holding on, <span class="highlight">babe</span>. You knew I was attached before I had the courage to admit it.</p>
+                
+                <p>Thank you for being my 11:00 AM <span class="highlight">supporter</span>, for carrying me through exams, and for being the only person who truly understands all my yapping. I love you more than words can describe.</p>
+                
+                <div class="footer">
+                    Celebrating you today... but the big day is coming.<br>
+                    <span class="highlight">4 DAYS UNTIL THE 19TH</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    
+    <script>
+        // Generate Background Stars
+        const starZone = document.getElementById('stars');
+        for (let i = 0; i < 150; i++) {
+            const star = document.createElement('div');
+            star.style.position = 'absolute';
+            star.style.width = '2px'; star.style.height = '2px';
+            star.style.background = i % 5 === 0 ? '#ff85a1' : '#fff';
+            star.style.borderRadius = '50%';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.opacity = Math.random() * 0.7 + 0.1;
+            starZone.appendChild(star);
+        }
+
+        // Draggable Logic
+        const sun = document.getElementById('sun-drag');
+        const moon = document.getElementById('moon-target');
+        let initialX = sun.offsetLeft;
+        let initialY = sun.offsetTop;
+
+        interact('.sun').draggable({
+            listeners: {
+                start(event) { event.target.style.transition = 'none'; },
+                move(event) {
+                    const x = (parseFloat(event.target.getAttribute('data-x')) || 0) + event.dx;
+                    const y = (parseFloat(event.target.getAttribute('data-y')) || 0) + event.dy;
+                    
+                    event.target.style.transform = `translate(${x}px, ${y}px)`;
+                    event.target.setAttribute('data-x', x);
+                    event.target.setAttribute('data-y', y);
+                    
+                    checkAlignment(event.target, moon);
+                },
+                end(event) {
+                    event.target.style.transition = 'all 0.4s ease';
+                    // We don't reset unless they miss
+                }
+            }
+        });
+
+        function checkAlignment(sunEl, moonEl) {
+            const sRect = sunEl.getBoundingClientRect();
+            const mRect = moonEl.getBoundingClientRect();
+            
+            // Check if centers are close
+            const dx = (sRect.left + sRect.width / 2) - (mRect.left + mRect.width / 2);
+            const dy = (sRect.top + sRect.height / 2) - (mRect.top + mRect.height / 2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < 50) { // Aligned!
+                interact('.sun').unset(); // Stop dragging
+                sunEl.style.transform = `translate(${mRect.left - initialX}px, ${mRect.top - initialY}px) scale(0.8)`;
+                sunEl.style.opacity = '0.5';
+                startCountdown();
+            }
+        }
+
+        function startCountdown() {
+            document.getElementById('puzzle-view').style.display = 'none';
+            document.getElementById('countdown-overlay').style.display = 'flex';
+            
+            const countdownText = document.getElementById('countdown-text');
+            let count = 4; // Since 4 days to go
+
+            const interval = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    countdownText.innerText = count;
+                } else {
+                    clearInterval(interval);
+                    document.getElementById('countdown-overlay').style.display = 'none';
+                    shootStar();
+                }
+            }, 1000);
+        }
+
+        function shootStar() {
+            const sStar = document.getElementById('shooting-star');
+            sStar.style.display = 'block';
+            sStar.style.top = '10%'; sStar.style.left = '90%';
+            
+            // Shooting Star Animation (The Meet)
+            sStar.animate([
+                { top: '10%', left: '90%', opacity: 1 },
+                { top: '80%', left: '10%', opacity: 0 }
+            ], { duration: 1500, easing: 'ease-in-out' }).onfinish = revealAll;
+        }
+
+        function revealAll() {
+            document.getElementById('reveal-zone').style.display = 'block';
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#ff85a1', '#e2e8f0'] });
+        }
+    </script>
+</body>
+</html>
